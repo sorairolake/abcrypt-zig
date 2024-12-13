@@ -9,11 +9,11 @@ default: build
 
 # Build a project
 @build:
-    zig build
+    zig build --summary all
 
 # Run tests
 @test:
-    zig build test
+    zig build test --summary all
 
 # Run the formatter
 @fmt:
