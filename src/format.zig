@@ -80,10 +80,7 @@ pub const Header = struct {
         if (!mem.startsWith(u8, data, &magic_number)) {
             return error.InvalidMagicNumber;
         }
-        const version = meta.intToEnum(
-            Version,
-            data[7],
-        ) catch return error.UnknownVersion;
+        const version = meta.intToEnum(Version, data[7]) catch return error.UnknownVersion;
         if (version != Version.v1) {
             return error.UnsupportedVersion;
         }
@@ -91,24 +88,14 @@ pub const Header = struct {
             crypto.pwhash.argon2.Mode,
             mem.readInt(u32, data[8..12], builtin.Endian.little),
         ) catch return error.InvalidArgon2Type;
-        const argon2_version = mem.readInt(
-            u32,
-            data[12..16],
-            builtin.Endian.little,
-        );
+        const argon2_version = mem.readInt(u32, data[12..16], builtin.Endian.little);
         switch (argon2_version) {
             0x10, 0x13 => {},
             else => return error.InvalidArgon2Version,
         }
-        const memory_cost = mem.readInt(
-            u32,
-            data[16..20],
-            builtin.Endian.little,
-        );
+        const memory_cost = mem.readInt(u32, data[16..20], builtin.Endian.little);
         const time_cost = mem.readInt(u32, data[20..24], builtin.Endian.little);
-        const parallelism: u24 = @intCast(
-            mem.readInt(u32, data[24..28], builtin.Endian.little),
-        );
+        const parallelism: u24 = @intCast(mem.readInt(u32, data[24..28], builtin.Endian.little));
         const params = crypto.pwhash.argon2.Params{
             .t = time_cost,
             .m = memory_cost,
@@ -125,16 +112,9 @@ pub const Header = struct {
         };
     }
 
-    pub fn compute_mac(
-        self: *Self,
-        key: [crypto.hash.blake2.Blake2b512.key_length_max]u8,
-    ) void {
+    pub fn compute_mac(self: *Self, key: [crypto.hash.blake2.Blake2b512.key_length_max]u8) void {
         const options = crypto.hash.blake2.Blake2b512.Options{ .key = &key };
-        crypto.hash.blake2.Blake2b512.hash(
-            self.asBytes()[0..84],
-            &self.mac,
-            options,
-        );
+        crypto.hash.blake2.Blake2b512.hash(self.asBytes()[0..84], &self.mac, options);
     }
 
     pub fn verify_mac(
@@ -144,11 +124,7 @@ pub const Header = struct {
     ) errors.DecryptError!void {
         var mac: [crypto.hash.blake2.Blake2b512.digest_length]u8 = undefined;
         const options = crypto.hash.blake2.Blake2b512.Options{ .key = &key };
-        crypto.hash.blake2.Blake2b512.hash(
-            self.asBytes()[0..84],
-            &mac,
-            options,
-        );
+        crypto.hash.blake2.Blake2b512.hash(self.asBytes()[0..84], &mac, options);
         if (!mem.eql(u8, &mac, &tag)) {
             return error.InvalidHeaderMac;
         }
@@ -160,20 +136,10 @@ pub const Header = struct {
         header[0..7].* = self.magic_number;
         header[7] = @intFromEnum(self.version);
         var argon2_type: [4]u8 = undefined;
-        mem.writeInt(
-            u32,
-            &argon2_type,
-            @intFromEnum(self.argon2_type),
-            builtin.Endian.little,
-        );
+        mem.writeInt(u32, &argon2_type, @intFromEnum(self.argon2_type), builtin.Endian.little);
         header[8..12].* = argon2_type;
         var argon2_version: [4]u8 = undefined;
-        mem.writeInt(
-            u32,
-            &argon2_version,
-            self.argon2_version,
-            builtin.Endian.little,
-        );
+        mem.writeInt(u32, &argon2_version, self.argon2_version, builtin.Endian.little);
         header[12..16].* = argon2_version;
         var memory_cost: [4]u8 = undefined;
         mem.writeInt(u32, &memory_cost, self.params.m, builtin.Endian.little);
@@ -213,10 +179,7 @@ test "header length" {
 
 test "tag length" {
     try testing.expectEqual(16, tag_length);
-    try testing.expectEqual(
-        crypto.aead.chacha_poly.XChaCha20Poly1305.tag_length,
-        tag_length,
-    );
+    try testing.expectEqual(crypto.aead.chacha_poly.XChaCha20Poly1305.tag_length, tag_length);
 }
 
 test "Version to integer" {

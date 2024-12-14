@@ -8,11 +8,5 @@
 
     .minimum_zig_version = "0.13.0",
 
-    .paths = .{
-        "build.zig",
-        "build.zig.zon",
-        "LICENSES",
-        "README.md",
-        "src",
-    },
+    .paths = .{ "build.zig", "build.zig.zon", "LICENSES", "README.md", "src" },
 }

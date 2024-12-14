@@ -17,8 +17,5 @@ test "header length" {
 
 test "tag length" {
     try testing.expectEqual(16, root.tag_length);
-    try testing.expectEqual(
-        crypto.aead.chacha_poly.XChaCha20Poly1305.tag_length,
-        root.tag_length,
-    );
+    try testing.expectEqual(crypto.aead.chacha_poly.XChaCha20Poly1305.tag_length, root.tag_length);
 }

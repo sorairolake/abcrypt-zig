@@ -53,10 +53,7 @@ pub const Decryptor = struct {
     }
 
     /// Decrypts the ciphertext into `buf`.
-    pub fn decrypt(
-        self: Self,
-        buf: []u8,
-    ) crypto.errors.AuthenticationError!void {
+    pub fn decrypt(self: Self, buf: []u8) crypto.errors.AuthenticationError!void {
         debug.assert(buf.len == self.outLen());
 
         const aad = "";

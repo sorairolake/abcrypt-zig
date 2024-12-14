@@ -34,11 +34,7 @@ pub const Encryptor = struct {
         plaintext: []const u8,
         passphrase: []const u8,
     ) errors.EncryptError!Self {
-        const owasp_2id = crypto.pwhash.argon2.Params{
-            .t = 2,
-            .m = 19 * 1024,
-            .p = 1,
-        };
+        const owasp_2id = crypto.pwhash.argon2.Params{ .t = 2, .m = 19 * 1024, .p = 1 };
         return initWithParams(allocator, plaintext, passphrase, owasp_2id);
     }
 
@@ -100,23 +96,23 @@ pub const Encryptor = struct {
         buf[0..format.Header.length].* = self.header.asBytes();
 
         var tag: [crypto.aead.chacha_poly.XChaCha20Poly1305.tag_length]u8 = undefined;
+        const start_tag = self.outLen() - format.tag_length;
         const aad = "";
         crypto.aead.chacha_poly.XChaCha20Poly1305.encrypt(
-            buf[format.Header.length..(self.outLen() - format.tag_length)],
+            buf[format.Header.length..start_tag],
             &tag,
             self.plaintext,
             aad,
             self.header.nonce,
             self.dk.encrypt,
         );
-        @memcpy(buf[(self.outLen() - format.tag_length)..], &tag);
+        @memcpy(buf[start_tag..], &tag);
     }
 
     /// Returns the number of output bytes of the encrypted data.
     pub fn outLen(self: Self) usize {
-        debug.assert(
-            self.plaintext.len <= (math.maxInt(usize) - format.Header.length - format.tag_length),
-        );
+        const max_plaintext_len = math.maxInt(usize) - format.Header.length - format.tag_length;
+        debug.assert(self.plaintext.len <= max_plaintext_len);
         return format.Header.length + self.plaintext.len + format.tag_length;
     }
 };
