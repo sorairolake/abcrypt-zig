@@ -12,6 +12,7 @@ const format = @import("format.zig");
 const crypto = std.crypto;
 const debug = std.debug;
 const mem = std.mem;
+const testing = std.testing;
 
 /// Decryptor for the abcrypt encrypted data format.
 pub const Decryptor = struct {
@@ -52,6 +53,13 @@ pub const Decryptor = struct {
         return .{ .header = header, .dk = dk, .ciphertext = body, .tag = tag };
     }
 
+    test init {
+        const ciphertext = @embedFile("tests/data/v1/data.txt.abcrypt");
+        const passphrase = "passphrase";
+
+        _ = try Decryptor.init(testing.allocator, ciphertext, passphrase);
+    }
+
     /// Decrypts the ciphertext into `buf`.
     pub fn decrypt(self: Self, buf: []u8) crypto.errors.AuthenticationError!void {
         debug.assert(buf.len == self.outLen());
@@ -67,9 +75,28 @@ pub const Decryptor = struct {
         );
     }
 
+    test decrypt {
+        const data = "Hello, world!\n";
+        const ciphertext = @embedFile("tests/data/v1/data.txt.abcrypt");
+        const passphrase = "passphrase";
+
+        const cipher = try Decryptor.init(testing.allocator, ciphertext, passphrase);
+        var buf: [14]u8 = undefined;
+        try cipher.decrypt(&buf);
+        try testing.expectEqualStrings(data, &buf);
+    }
+
     /// Returns the number of output bytes of the decrypted data.
     pub fn outLen(self: Self) usize {
         return self.ciphertext.len;
+    }
+
+    test outLen {
+        const ciphertext = @embedFile("tests/data/v1/data.txt.abcrypt");
+        const passphrase = "passphrase";
+
+        const cipher = try Decryptor.init(testing.allocator, ciphertext, passphrase);
+        try testing.expectEqual(14, cipher.outLen());
     }
 };
 

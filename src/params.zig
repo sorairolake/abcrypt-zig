@@ -4,8 +4,12 @@
 
 //! The Argon2 parameters.
 
+const std = @import("std");
+
 const errors = @import("errors.zig");
 const format = @import("format.zig");
+
+const testing = std.testing;
 
 /// The Argon2 parameters used for the encrypted data.
 pub const Params = struct {
@@ -28,6 +32,15 @@ pub const Params = struct {
             .time_cost = header.params.t,
             .parallelism = header.params.p,
         };
+    }
+
+    test init {
+        const ciphertext = @embedFile("tests/data/v1/data.txt.abcrypt");
+
+        const params = try Params.init(ciphertext);
+        try testing.expectEqual(32, params.memory_cost);
+        try testing.expectEqual(3, params.time_cost);
+        try testing.expectEqual(4, params.parallelism);
     }
 };
 

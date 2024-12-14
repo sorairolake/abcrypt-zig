@@ -18,7 +18,7 @@ test "decrypt" {
     const decryptor = try root.Decryptor.init(testing.allocator, test_data_enc, passphrase);
     var plaintext: [test_data.len]u8 = undefined;
     try decryptor.decrypt(&plaintext);
-    try testing.expectEqualSlices(u8, test_data, &plaintext);
+    try testing.expectEqualStrings(test_data, &plaintext);
 }
 
 test "decrypt from incorrect passphrase" {

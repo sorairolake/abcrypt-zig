@@ -13,6 +13,7 @@ const crypto = std.crypto;
 const debug = std.debug;
 const math = std.math;
 const mem = std.mem;
+const testing = std.testing;
 
 /// Encryptor for the abcrypt encrypted data format.
 pub const Encryptor = struct {
@@ -38,6 +39,13 @@ pub const Encryptor = struct {
         return initWithParams(allocator, plaintext, passphrase, owasp_2id);
     }
 
+    test init {
+        const data = "Hello, world!\n";
+        const passphrase = "passphrase";
+
+        _ = try Encryptor.init(testing.allocator, data, passphrase);
+    }
+
     /// Creates a new `Encryptor` with the specified
     /// `crypto.pwhash.argon2.Params`.
     ///
@@ -56,6 +64,14 @@ pub const Encryptor = struct {
             crypto.pwhash.argon2.Mode.argon2id,
             params,
         );
+    }
+
+    test initWithParams {
+        const data = "Hello, world!\n";
+        const passphrase = "passphrase";
+
+        const params = crypto.pwhash.argon2.Params{ .t = 3, .m = 32, .p = 4 };
+        _ = try Encryptor.initWithParams(testing.allocator, data, passphrase, params);
     }
 
     /// Creates a new `Encryptor` with the specified
@@ -89,6 +105,15 @@ pub const Encryptor = struct {
         return .{ .header = header, .dk = dk, .plaintext = plaintext };
     }
 
+    test initWithContext {
+        const data = "Hello, world!\n";
+        const passphrase = "passphrase";
+
+        const mode = crypto.pwhash.argon2.Mode.argon2i;
+        const params = crypto.pwhash.argon2.Params{ .t = 3, .m = 32, .p = 4 };
+        _ = try Encryptor.initWithContext(testing.allocator, data, passphrase, mode, params);
+    }
+
     /// Encrypts the plaintext into `buf`.
     pub fn encrypt(self: Self, buf: []u8) void {
         debug.assert(buf.len == self.outLen());
@@ -109,11 +134,31 @@ pub const Encryptor = struct {
         @memcpy(buf[start_tag..], &tag);
     }
 
+    test encrypt {
+        const data = "Hello, world!\n";
+        const passphrase = "passphrase";
+
+        const params = crypto.pwhash.argon2.Params{ .t = 3, .m = 32, .p = 4 };
+        const cipher = try Encryptor.initWithParams(testing.allocator, data, passphrase, params);
+        var buf: [178]u8 = undefined;
+        cipher.encrypt(&buf);
+        try testing.expect(!mem.eql(u8, &buf, data));
+    }
+
     /// Returns the number of output bytes of the encrypted data.
     pub fn outLen(self: Self) usize {
         const max_plaintext_len = math.maxInt(usize) - format.Header.length - format.tag_length;
         debug.assert(self.plaintext.len <= max_plaintext_len);
         return format.Header.length + self.plaintext.len + format.tag_length;
+    }
+
+    test outLen {
+        const data = "Hello, world!\n";
+        const passphrase = "passphrase";
+
+        const params = crypto.pwhash.argon2.Params{ .t = 3, .m = 32, .p = 4 };
+        const cipher = try Encryptor.initWithParams(testing.allocator, data, passphrase, params);
+        try testing.expectEqual(178, cipher.outLen());
     }
 };
 
