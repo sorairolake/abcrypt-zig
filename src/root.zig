@@ -24,13 +24,13 @@ pub const tag_length = format.tag_length;
 pub const Params = params.Params;
 
 test {
+    _ = @import("tests/root.zig");
+}
+
+test {
     const std = @import("std");
 
     const testing = std.testing;
 
     testing.refAllDeclsRecursive(@This());
-}
-
-test {
-    _ = @import("tests/root.zig");
 }

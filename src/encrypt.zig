@@ -162,6 +162,6 @@ pub const Encryptor = struct {
     }
 };
 
-test "encrypt" {
+test {
     _ = @import("tests/encrypt.zig");
 }

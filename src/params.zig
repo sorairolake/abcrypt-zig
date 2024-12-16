@@ -44,6 +44,6 @@ pub const Params = struct {
     }
 };
 
-test "params" {
+test {
     _ = @import("tests/params.zig");
 }

@@ -100,6 +100,6 @@ pub const Decryptor = struct {
     }
 };
 
-test "decrypt" {
+test {
     _ = @import("tests/decrypt.zig");
 }
