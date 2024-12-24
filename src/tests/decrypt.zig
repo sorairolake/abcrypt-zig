@@ -12,13 +12,35 @@ const testing = std.testing;
 
 const passphrase = "passphrase";
 const test_data = @embedFile("data/data.txt");
-const test_data_enc = @embedFile("data/v1/data.txt.abcrypt");
+const test_data_enc = @embedFile("data/v1/argon2id/v0x13/data.txt.abcrypt");
 
 test "decrypt" {
-    const decryptor = try root.Decryptor.init(testing.allocator, test_data_enc, passphrase);
-    var plaintext: [test_data.len]u8 = undefined;
-    try decryptor.decrypt(&plaintext);
-    try testing.expectEqualStrings(test_data, &plaintext);
+    {
+        const decryptor = try root.Decryptor.init(
+            testing.allocator,
+            @embedFile("data/v1/argon2d/v0x13/data.txt.abcrypt"),
+            passphrase,
+        );
+        var plaintext: [test_data.len]u8 = undefined;
+        try decryptor.decrypt(&plaintext);
+        try testing.expectEqualStrings(test_data, &plaintext);
+    }
+    {
+        const decryptor = try root.Decryptor.init(
+            testing.allocator,
+            @embedFile("data/v1/argon2i/v0x13/data.txt.abcrypt"),
+            passphrase,
+        );
+        var plaintext: [test_data.len]u8 = undefined;
+        try decryptor.decrypt(&plaintext);
+        try testing.expectEqualStrings(test_data, &plaintext);
+    }
+    {
+        const decryptor = try root.Decryptor.init(testing.allocator, test_data_enc, passphrase);
+        var plaintext: [test_data.len]u8 = undefined;
+        try decryptor.decrypt(&plaintext);
+        try testing.expectEqualStrings(test_data, &plaintext);
+    }
 }
 
 test "decrypt from incorrect passphrase" {

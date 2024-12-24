@@ -54,7 +54,7 @@ pub const Decryptor = struct {
     }
 
     test init {
-        const ciphertext = @embedFile("tests/data/v1/data.txt.abcrypt");
+        const ciphertext = @embedFile("tests/data/v1/argon2id/v0x13/data.txt.abcrypt");
         const passphrase = "passphrase";
 
         _ = try Decryptor.init(testing.allocator, ciphertext, passphrase);
@@ -77,7 +77,7 @@ pub const Decryptor = struct {
 
     test decrypt {
         const data = "Hello, world!\n";
-        const ciphertext = @embedFile("tests/data/v1/data.txt.abcrypt");
+        const ciphertext = @embedFile("tests/data/v1/argon2id/v0x13/data.txt.abcrypt");
         const passphrase = "passphrase";
 
         const cipher = try Decryptor.init(testing.allocator, ciphertext, passphrase);
@@ -92,7 +92,7 @@ pub const Decryptor = struct {
     }
 
     test outLen {
-        const ciphertext = @embedFile("tests/data/v1/data.txt.abcrypt");
+        const ciphertext = @embedFile("tests/data/v1/argon2id/v0x13/data.txt.abcrypt");
         const passphrase = "passphrase";
 
         const cipher = try Decryptor.init(testing.allocator, ciphertext, passphrase);

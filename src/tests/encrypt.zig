@@ -64,31 +64,87 @@ test "encrypt with params" {
 }
 
 test "encrypt with context" {
-    const params = crypto.pwhash.argon2.Params{ .t = 3, .m = 32, .p = 4 };
-    const encryptor = try root.Encryptor.initWithContext(
-        testing.allocator,
-        test_data,
-        passphrase,
-        crypto.pwhash.argon2.Mode.argon2i,
-        params,
-    );
-    var ciphertext: [test_data.len + root.header_length + root.tag_length]u8 = undefined;
-    encryptor.encrypt(&ciphertext);
-    try testing.expect(!mem.eql(u8, &ciphertext, test_data));
+    {
+        const params = crypto.pwhash.argon2.Params{ .t = 2, .m = 19456, .p = 1 };
+        const encryptor = try root.Encryptor.initWithContext(
+            testing.allocator,
+            test_data,
+            passphrase,
+            crypto.pwhash.argon2.Mode.argon2d,
+            params,
+        );
+        var ciphertext: [test_data.len + root.header_length + root.tag_length]u8 = undefined;
+        encryptor.encrypt(&ciphertext);
+        try testing.expect(!mem.eql(u8, &ciphertext, test_data));
 
-    const header = try format.Header.parse(&ciphertext);
-    try testing.expectEqual(crypto.pwhash.argon2.Mode.argon2i, header.argon2_type);
-    try testing.expectEqual(0x13, header.argon2_version);
+        const header = try format.Header.parse(&ciphertext);
+        try testing.expectEqual(crypto.pwhash.argon2.Mode.argon2d, header.argon2_type);
+        try testing.expectEqual(0x13, header.argon2_version);
 
-    const parameters = try root.Params.init(&ciphertext);
-    try testing.expectEqual(32, parameters.memory_cost);
-    try testing.expectEqual(3, parameters.time_cost);
-    try testing.expectEqual(4, parameters.parallelism);
+        const parameters = try root.Params.init(&ciphertext);
+        try testing.expectEqual(19456, parameters.memory_cost);
+        try testing.expectEqual(2, parameters.time_cost);
+        try testing.expectEqual(1, parameters.parallelism);
 
-    const decryptor = try root.Decryptor.init(testing.allocator, &ciphertext, passphrase);
-    var plaintext: [test_data.len]u8 = undefined;
-    try decryptor.decrypt(&plaintext);
-    try testing.expectEqualSlices(u8, test_data, &plaintext);
+        const decryptor = try root.Decryptor.init(testing.allocator, &ciphertext, passphrase);
+        var plaintext: [test_data.len]u8 = undefined;
+        try decryptor.decrypt(&plaintext);
+        try testing.expectEqualSlices(u8, test_data, &plaintext);
+    }
+    {
+        const params = crypto.pwhash.argon2.Params{ .t = 4, .m = 9216, .p = 1 };
+        const encryptor = try root.Encryptor.initWithContext(
+            testing.allocator,
+            test_data,
+            passphrase,
+            crypto.pwhash.argon2.Mode.argon2i,
+            params,
+        );
+        var ciphertext: [test_data.len + root.header_length + root.tag_length]u8 = undefined;
+        encryptor.encrypt(&ciphertext);
+        try testing.expect(!mem.eql(u8, &ciphertext, test_data));
+
+        const header = try format.Header.parse(&ciphertext);
+        try testing.expectEqual(crypto.pwhash.argon2.Mode.argon2i, header.argon2_type);
+        try testing.expectEqual(0x13, header.argon2_version);
+
+        const parameters = try root.Params.init(&ciphertext);
+        try testing.expectEqual(9216, parameters.memory_cost);
+        try testing.expectEqual(4, parameters.time_cost);
+        try testing.expectEqual(1, parameters.parallelism);
+
+        const decryptor = try root.Decryptor.init(testing.allocator, &ciphertext, passphrase);
+        var plaintext: [test_data.len]u8 = undefined;
+        try decryptor.decrypt(&plaintext);
+        try testing.expectEqualSlices(u8, test_data, &plaintext);
+    }
+    {
+        const params = crypto.pwhash.argon2.Params{ .t = 3, .m = 32, .p = 4 };
+        const encryptor = try root.Encryptor.initWithContext(
+            testing.allocator,
+            test_data,
+            passphrase,
+            crypto.pwhash.argon2.Mode.argon2id,
+            params,
+        );
+        var ciphertext: [test_data.len + root.header_length + root.tag_length]u8 = undefined;
+        encryptor.encrypt(&ciphertext);
+        try testing.expect(!mem.eql(u8, &ciphertext, test_data));
+
+        const header = try format.Header.parse(&ciphertext);
+        try testing.expectEqual(crypto.pwhash.argon2.Mode.argon2id, header.argon2_type);
+        try testing.expectEqual(0x13, header.argon2_version);
+
+        const parameters = try root.Params.init(&ciphertext);
+        try testing.expectEqual(32, parameters.memory_cost);
+        try testing.expectEqual(3, parameters.time_cost);
+        try testing.expectEqual(4, parameters.parallelism);
+
+        const decryptor = try root.Decryptor.init(testing.allocator, &ciphertext, passphrase);
+        var plaintext: [test_data.len]u8 = undefined;
+        try decryptor.decrypt(&plaintext);
+        try testing.expectEqualSlices(u8, test_data, &plaintext);
+    }
 }
 
 test "encrypt with invalid Argon2 parameters" {

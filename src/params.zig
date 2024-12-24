@@ -35,7 +35,7 @@ pub const Params = struct {
     }
 
     test init {
-        const ciphertext = @embedFile("tests/data/v1/data.txt.abcrypt");
+        const ciphertext = @embedFile("tests/data/v1/argon2id/v0x13/data.txt.abcrypt");
 
         const params = try Params.init(ciphertext);
         try testing.expectEqual(32, params.memory_cost);
