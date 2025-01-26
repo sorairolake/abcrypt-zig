@@ -5,7 +5,7 @@
 //! The `abcrypt` package is an implementation of the [abcrypt encrypted data
 //! format].
 //!
-//! This package supports the abcrypt version 1 file format.
+//! This package supports version 1 of the abcrypt format.
 //!
 //! [abcrypt encrypted data format]: https://sorairolake.github.io/abcrypt/book/format.html
 
