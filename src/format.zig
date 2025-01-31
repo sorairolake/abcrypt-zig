@@ -6,18 +6,23 @@
 
 const std = @import("std");
 
-const errors = @import("errors.zig");
-
-const builtin = std.builtin;
-const crypto = std.crypto;
+const DefaultCsprng = std.Random.DefaultCsprng;
+const Endian = std.builtin.Endian;
+const XChaCha20Poly1305 = std.crypto.aead.chacha_poly.XChaCha20Poly1305;
+const Blake2b512 = std.crypto.hash.blake2.Blake2b512;
+const Mode = std.crypto.pwhash.argon2.Mode;
+const Params = std.crypto.pwhash.argon2.Params;
 const debug = std.debug;
 const mem = std.mem;
 const meta = std.meta;
 const posix = std.posix;
+const GetRandomError = std.posix.GetRandomError;
 const testing = std.testing;
 
+const DecryptError = @import("errors.zig").DecryptError;
+
 /// The number of bytes of the MAC (authentication tag) of the ciphertext.
-pub const tag_length = crypto.aead.chacha_poly.XChaCha20Poly1305.tag_length;
+pub const tag_length = XChaCha20Poly1305.tag_length;
 
 /// Version of the abcrypt encrypted data format.
 pub const Version = enum {
@@ -32,12 +37,12 @@ pub const Version = enum {
 pub const Header = struct {
     magic_number: [7]u8 = magic_number,
     version: Version = .v1,
-    argon2_type: crypto.pwhash.argon2.Mode,
+    argon2_type: Mode,
     argon2_version: u32 = 0x13,
-    params: crypto.pwhash.argon2.Params,
+    params: Params,
     salt: [32]u8,
-    nonce: [crypto.aead.chacha_poly.XChaCha20Poly1305.nonce_length]u8,
-    mac: [crypto.hash.blake2.Blake2b512.digest_length]u8,
+    nonce: [XChaCha20Poly1305.nonce_length]u8,
+    mac: [Blake2b512.digest_length]u8,
 
     const Self = @This();
 
@@ -49,19 +54,16 @@ pub const Header = struct {
     /// The number of bytes of the header.
     pub const length = 148;
 
-    pub fn init(
-        argon2_type: crypto.pwhash.argon2.Mode,
-        params: crypto.pwhash.argon2.Params,
-    ) posix.GetRandomError!Self {
+    pub fn init(argon2_type: Mode, params: Params) GetRandomError!Self {
         debug.assert(params.secret == null);
         debug.assert(params.ad == null);
 
-        var seed: [std.Random.DefaultCsprng.secret_seed_length]u8 = undefined;
+        var seed: [DefaultCsprng.secret_seed_length]u8 = undefined;
         try posix.getrandom(&seed);
-        var rng = std.Random.DefaultCsprng.init(seed);
+        var rng = DefaultCsprng.init(seed);
         var salt: [32]u8 = undefined;
         rng.fill(&salt);
-        var nonce: [crypto.aead.chacha_poly.XChaCha20Poly1305.nonce_length]u8 = undefined;
+        var nonce: [XChaCha20Poly1305.nonce_length]u8 = undefined;
         rng.fill(&nonce);
         return .{
             .argon2_type = argon2_type,
@@ -72,7 +74,7 @@ pub const Header = struct {
         };
     }
 
-    pub fn parse(data: []const u8) errors.DecryptError!Self {
+    pub fn parse(data: []const u8) DecryptError!Self {
         if (data.len < length + tag_length) {
             return error.InvalidLength;
         }
@@ -85,22 +87,18 @@ pub const Header = struct {
             return error.UnsupportedVersion;
         }
         const argon2_type = meta.intToEnum(
-            crypto.pwhash.argon2.Mode,
-            mem.readInt(u32, data[8..12], builtin.Endian.little),
+            Mode,
+            mem.readInt(u32, data[8..12], Endian.little),
         ) catch return error.InvalidArgon2Type;
-        const argon2_version = mem.readInt(u32, data[12..16], builtin.Endian.little);
+        const argon2_version = mem.readInt(u32, data[12..16], Endian.little);
         switch (argon2_version) {
             0x10, 0x13 => {},
             else => return error.InvalidArgon2Version,
         }
-        const memory_cost = mem.readInt(u32, data[16..20], builtin.Endian.little);
-        const time_cost = mem.readInt(u32, data[20..24], builtin.Endian.little);
-        const parallelism: u24 = @intCast(mem.readInt(u32, data[24..28], builtin.Endian.little));
-        const params = crypto.pwhash.argon2.Params{
-            .t = time_cost,
-            .m = memory_cost,
-            .p = parallelism,
-        };
+        const memory_cost = mem.readInt(u32, data[16..20], Endian.little);
+        const time_cost = mem.readInt(u32, data[20..24], Endian.little);
+        const parallelism: u24 = @intCast(mem.readInt(u32, data[24..28], Endian.little));
+        const params = Params{ .t = time_cost, .m = memory_cost, .p = parallelism };
         const salt = data[28..60].*;
         const nonce = data[60..84].*;
         return .{
@@ -112,19 +110,19 @@ pub const Header = struct {
         };
     }
 
-    pub fn compute_mac(self: *Self, key: [crypto.hash.blake2.Blake2b512.key_length_max]u8) void {
-        const options = crypto.hash.blake2.Blake2b512.Options{ .key = &key };
-        crypto.hash.blake2.Blake2b512.hash(self.asBytes()[0..84], &self.mac, options);
+    pub fn compute_mac(self: *Self, key: [Blake2b512.key_length_max]u8) void {
+        const options = Blake2b512.Options{ .key = &key };
+        Blake2b512.hash(self.asBytes()[0..84], &self.mac, options);
     }
 
     pub fn verify_mac(
         self: *Self,
-        key: [crypto.hash.blake2.Blake2b512.key_length_max]u8,
-        tag: [crypto.hash.blake2.Blake2b512.digest_length]u8,
-    ) errors.DecryptError!void {
-        var mac: [crypto.hash.blake2.Blake2b512.digest_length]u8 = undefined;
-        const options = crypto.hash.blake2.Blake2b512.Options{ .key = &key };
-        crypto.hash.blake2.Blake2b512.hash(self.asBytes()[0..84], &mac, options);
+        key: [Blake2b512.key_length_max]u8,
+        tag: [Blake2b512.digest_length]u8,
+    ) DecryptError!void {
+        var mac: [Blake2b512.digest_length]u8 = undefined;
+        const options = Blake2b512.Options{ .key = &key };
+        Blake2b512.hash(self.asBytes()[0..84], &mac, options);
         if (!mem.eql(u8, &mac, &tag)) {
             return error.InvalidHeaderMac;
         }
@@ -136,19 +134,19 @@ pub const Header = struct {
         header[0..7].* = self.magic_number;
         header[7] = @intFromEnum(self.version);
         var argon2_type: [4]u8 = undefined;
-        mem.writeInt(u32, &argon2_type, @intFromEnum(self.argon2_type), builtin.Endian.little);
+        mem.writeInt(u32, &argon2_type, @intFromEnum(self.argon2_type), Endian.little);
         header[8..12].* = argon2_type;
         var argon2_version: [4]u8 = undefined;
-        mem.writeInt(u32, &argon2_version, self.argon2_version, builtin.Endian.little);
+        mem.writeInt(u32, &argon2_version, self.argon2_version, Endian.little);
         header[12..16].* = argon2_version;
         var memory_cost: [4]u8 = undefined;
-        mem.writeInt(u32, &memory_cost, self.params.m, builtin.Endian.little);
+        mem.writeInt(u32, &memory_cost, self.params.m, Endian.little);
         header[16..20].* = memory_cost;
         var time_cost: [4]u8 = undefined;
-        mem.writeInt(u32, &time_cost, self.params.t, builtin.Endian.little);
+        mem.writeInt(u32, &time_cost, self.params.t, Endian.little);
         header[20..24].* = time_cost;
         var parallelism: [4]u8 = undefined;
-        mem.writeInt(u32, &parallelism, self.params.p, builtin.Endian.little);
+        mem.writeInt(u32, &parallelism, self.params.p, Endian.little);
         header[24..28].* = parallelism;
         header[28..60].* = self.salt;
         header[60..84].* = self.nonce;
@@ -159,8 +157,8 @@ pub const Header = struct {
 
 /// Derived key.
 pub const DerivedKey = struct {
-    encrypt: [crypto.aead.chacha_poly.XChaCha20Poly1305.key_length]u8,
-    mac: [crypto.hash.blake2.Blake2b512.key_length_max]u8,
+    encrypt: [XChaCha20Poly1305.key_length]u8,
+    mac: [Blake2b512.key_length_max]u8,
 
     const Self = @This();
 
@@ -179,7 +177,7 @@ test "header length" {
 
 test "tag length" {
     try testing.expectEqual(16, tag_length);
-    try testing.expectEqual(crypto.aead.chacha_poly.XChaCha20Poly1305.tag_length, tag_length);
+    try testing.expectEqual(XChaCha20Poly1305.tag_length, tag_length);
 }
 
 test "Version to integer" {

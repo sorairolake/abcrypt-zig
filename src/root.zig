@@ -9,28 +9,21 @@
 //!
 //! [abcrypt encrypted data format]: https://sorairolake.github.io/abcrypt/book/format.html
 
-const decrypt = @import("decrypt.zig");
-const encrypt = @import("encrypt.zig");
 const errors = @import("errors.zig");
 const format = @import("format.zig");
-const params = @import("params.zig");
 
-pub const Decryptor = decrypt.Decryptor;
-pub const Encryptor = encrypt.Encryptor;
+pub const Decryptor = @import("decrypt.zig").Decryptor;
+pub const Encryptor = @import("encrypt.zig").Encryptor;
 pub const DecryptError = errors.DecryptError;
 pub const EncryptError = errors.EncryptError;
 pub const header_length = format.Header.length;
 pub const tag_length = format.tag_length;
-pub const Params = params.Params;
+pub const Params = @import("params.zig").Params;
 
 test {
+    const testing = @import("std").testing;
+
     _ = @import("tests/root.zig");
-}
-
-test {
-    const std = @import("std");
-
-    const testing = std.testing;
 
     testing.refAllDeclsRecursive(@This());
 }

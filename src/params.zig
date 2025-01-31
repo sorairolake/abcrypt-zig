@@ -4,12 +4,10 @@
 
 //! The Argon2 parameters.
 
-const std = @import("std");
+const testing = @import("std").testing;
 
-const errors = @import("errors.zig");
-const format = @import("format.zig");
-
-const testing = std.testing;
+const DecryptError = @import("errors.zig").DecryptError;
+const Header = @import("format.zig").Header;
 
 /// The Argon2 parameters used for the encrypted data.
 pub const Params = struct {
@@ -25,8 +23,8 @@ pub const Params = struct {
     const Self = @This();
 
     /// Creates a new instance of the Argon2 parameters from `ciphertext`.
-    pub fn init(ciphertext: []const u8) errors.DecryptError!Self {
-        const header = try format.Header.parse(ciphertext);
+    pub fn init(ciphertext: []const u8) DecryptError!Self {
+        const header = try Header.parse(ciphertext);
         return .{
             .memory_cost = header.params.m,
             .time_cost = header.params.t,
