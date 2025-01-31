@@ -10,7 +10,7 @@ pub fn build(b: *std.Build) void {
 
     _ = b.addModule("abcrypt", .{ .root_source_file = b.path("src/root.zig") });
 
-    const test_step = b.step("test", "Run library tests");
+    const test_step = b.step("test", "Run the tests");
     const tests = b.addTest(.{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
@@ -19,17 +19,17 @@ pub fn build(b: *std.Build) void {
     const run_tests = b.addRunArtifact(tests);
     test_step.dependOn(&run_tests.step);
 
-    const doc_step = b.step("doc", "Build the documentation");
+    const doc_step = b.step("doc", "Build the package documentation");
     const doc_obj = b.addObject(.{
         .name = "abcrypt",
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
     });
-    const install_docs = b.addInstallDirectory(.{
+    const install_doc = b.addInstallDirectory(.{
         .source_dir = doc_obj.getEmittedDocs(),
         .install_dir = .prefix,
-        .install_subdir = "docs",
+        .install_subdir = "doc/abcrypt",
     });
-    doc_step.dependOn(&install_docs.step);
+    doc_step.dependOn(&install_doc.step);
 }

@@ -35,12 +35,12 @@ To build the documentation:
 zig build doc
 ```
 
-The result is generated in `zig-out/docs`.
+The result is generated in `zig-out/doc/abcrypt`.
 
 If you want to preview this, run a HTTP server locally. For example:
 
 ```sh
-python -m http.server -d zig-out/docs
+python -m http.server -d zig-out/doc/abcrypt
 ```
 
 Then open `http://localhost:8000/` in your browser.
