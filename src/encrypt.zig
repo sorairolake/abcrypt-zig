@@ -32,11 +32,10 @@ pub const Encryptor = struct {
 
     /// Creates a new `Encryptor`.
     ///
-    /// This uses the recommended Argon2 parameters according to the [OWASP
-    /// Password Storage Cheat Sheet]. This also uses Argon2id as the Argon2
-    /// type and version 0x13 as the Argon2 version.
-    ///
-    /// [OWASP Password Storage Cheat Sheet]: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id
+    /// This uses the recommended Argon2 parameters according to the
+    /// [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id).
+    /// This also uses Argon2id as the Argon2 type and version 0x13 as the
+    /// Argon2 version.
     pub fn init(
         allocator: Allocator,
         plaintext: []const u8,

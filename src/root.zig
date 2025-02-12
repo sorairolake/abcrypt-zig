@@ -2,12 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-//! The `abcrypt` package is an implementation of the [abcrypt encrypted data
-//! format].
+//! The `abcrypt` package is an implementation of the
+//! [abcrypt encrypted data format](https://sorairolake.github.io/abcrypt/book/format.html).
 //!
 //! This package supports version 1 of the abcrypt format.
-//!
-//! [abcrypt encrypted data format]: https://sorairolake.github.io/abcrypt/book/format.html
 
 const errors = @import("errors.zig");
 const format = @import("format.zig");
