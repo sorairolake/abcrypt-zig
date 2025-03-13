@@ -41,8 +41,7 @@ pub const Encryptor = struct {
         plaintext: []const u8,
         passphrase: []const u8,
     ) EncryptError!Self {
-        const owasp_2id = Params{ .t = 2, .m = 19 * 1024, .p = 1 };
-        return initWithParams(allocator, plaintext, passphrase, owasp_2id);
+        return initWithParams(allocator, plaintext, passphrase, Params.owasp_2id);
     }
 
     test init {

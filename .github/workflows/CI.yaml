@@ -41,7 +41,7 @@ jobs:
       - name: Setup Zig environment
         uses: goto-bus-stop/setup-zig@v2.2.1
         with:
-          version: 0.13.0
+          version: 0.14.0
       - name: Build a project
         run: zig build --summary all
       - name: Run tests
@@ -56,6 +56,6 @@ jobs:
       - name: Setup Zig environment
         uses: goto-bus-stop/setup-zig@v2.2.1
         with:
-          version: 0.13.0
+          version: 0.14.0
       - name: Check code formatted
         run: zig fmt --check .

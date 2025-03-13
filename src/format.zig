@@ -35,7 +35,7 @@ pub const Version = enum {
 
 /// Header of the abcrypt encrypted data format.
 pub const Header = struct {
-    magic_number: [7]u8 = magic_number,
+    magic_number: [7]u8 = signature,
     version: Version = .v1,
     argon2_type: Mode,
     argon2_version: u32 = 0x13,
@@ -49,7 +49,7 @@ pub const Header = struct {
     /// Magic number of the abcrypt encrypted data format.
     ///
     /// This is the ASCII code for "abcrypt".
-    const magic_number = "abcrypt".*;
+    const signature = "abcrypt".*;
 
     /// The number of bytes of the header.
     pub const length = 148;
@@ -79,7 +79,7 @@ pub const Header = struct {
             return error.InvalidLength;
         }
 
-        if (!mem.startsWith(u8, data, &magic_number)) {
+        if (!mem.startsWith(u8, data, &signature)) {
             return error.InvalidMagicNumber;
         }
         const version = meta.intToEnum(Version, data[7]) catch return error.UnknownVersion;
@@ -186,7 +186,7 @@ test "Version to integer" {
 }
 
 test "magic number" {
-    try testing.expectEqualStrings("abcrypt", &Header.magic_number);
+    try testing.expectEqualStrings("abcrypt", &Header.signature);
 }
 
 test "derived key length" {

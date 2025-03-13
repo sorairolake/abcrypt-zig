@@ -93,7 +93,7 @@ test "decrypt from invalid params" {
         mem.writeInt(u32, &memory_cost, 7, Endian.little);
         data[16..20].* = memory_cost;
         const decryptor = Decryptor.init(testing.allocator, &data, passphrase);
-        try testing.expectError(DecryptError.InvalidHeaderMac, decryptor);
+        try testing.expectError(DecryptError.WeakParameters, decryptor);
     }
 
     {
