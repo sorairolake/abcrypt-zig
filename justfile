@@ -2,10 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0 OR MIT
 
-alias all := default
-
 # Run default recipe
-default: build
+@_default:
+    just -l
 
 # Build a project
 @build:
@@ -19,6 +18,10 @@ default: build
 @fmt:
     zig fmt .
 
+# Build the package documentation
+@doc:
+    zig build doc --summary all
+
 # Run the linter for GitHub Actions workflow files
 @lint-github-actions:
     actionlint -verbose
@@ -29,4 +32,4 @@ default: build
 
 # Increment the version
 @bump part:
-    bump-my-version bump {{part}}
+    bump-my-version bump {{ part }}

@@ -10,7 +10,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 
 **abcrypt-zig** is an implementation of the [abcrypt encrypted data format].
 
-This package supports the abcrypt version 1 file format.
+This package supports version 1 of the abcrypt format.
 
 ## Usage
 
@@ -35,19 +35,19 @@ To build the documentation:
 zig build doc
 ```
 
-The result is generated in `zig-out/docs`.
+The result is generated in `zig-out/doc/abcrypt`.
 
 If you want to preview this, run a HTTP server locally. For example:
 
 ```sh
-python -m http.server -d zig-out/docs
+python -m http.server -d zig-out/doc/abcrypt
 ```
 
 Then open `http://localhost:8000/` in your browser.
 
 ## Zig version
 
-This library is compatible with Zig version 0.13.0.
+This library is compatible with Zig version 0.14.0.
 
 ## Source code
 
@@ -74,7 +74,7 @@ Copyright (C) 2024 Shun Sakai (see [AUTHORS.adoc])
 This library is distributed under the terms of either the _Apache License 2.0_
 or the _MIT License_.
 
-This project is compliant with version 3.2 of the [_REUSE Specification_]. See
+This project is compliant with version 3.3 of the [_REUSE Specification_]. See
 copyright notices of individual files for more details on copyright and
 licensing information.
 
@@ -84,4 +84,4 @@ licensing information.
 [CHANGELOG.adoc]: CHANGELOG.adoc
 [CONTRIBUTING.adoc]: CONTRIBUTING.adoc
 [AUTHORS.adoc]: AUTHORS.adoc
-[_REUSE Specification_]: https://reuse.software/spec/
+[_REUSE Specification_]: https://reuse.software/spec-3.3/

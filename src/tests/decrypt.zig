@@ -6,9 +6,12 @@ const std = @import("std");
 
 const root = @import("../root.zig");
 
-const builtin = std.builtin;
+const Endian = std.builtin.Endian;
 const mem = std.mem;
 const testing = std.testing;
+
+const DecryptError = root.DecryptError;
+const Decryptor = root.Decryptor;
 
 const passphrase = "passphrase";
 const test_data = @embedFile("data/data.txt");
@@ -16,7 +19,7 @@ const test_data_enc = @embedFile("data/v1/argon2id/v0x13/data.txt.abcrypt");
 
 test "decrypt" {
     {
-        const decryptor = try root.Decryptor.init(
+        const decryptor = try Decryptor.init(
             testing.allocator,
             @embedFile("data/v1/argon2d/v0x13/data.txt.abcrypt"),
             passphrase,
@@ -26,7 +29,7 @@ test "decrypt" {
         try testing.expectEqualStrings(test_data, &plaintext);
     }
     {
-        const decryptor = try root.Decryptor.init(
+        const decryptor = try Decryptor.init(
             testing.allocator,
             @embedFile("data/v1/argon2i/v0x13/data.txt.abcrypt"),
             passphrase,
@@ -36,7 +39,7 @@ test "decrypt" {
         try testing.expectEqualStrings(test_data, &plaintext);
     }
     {
-        const decryptor = try root.Decryptor.init(testing.allocator, test_data_enc, passphrase);
+        const decryptor = try Decryptor.init(testing.allocator, test_data_enc, passphrase);
         var plaintext: [test_data.len]u8 = undefined;
         try decryptor.decrypt(&plaintext);
         try testing.expectEqualStrings(test_data, &plaintext);
@@ -44,42 +47,42 @@ test "decrypt" {
 }
 
 test "decrypt from incorrect passphrase" {
-    const decryptor = root.Decryptor.init(testing.allocator, test_data_enc, "password");
-    try testing.expectError(root.DecryptError.InvalidHeaderMac, decryptor);
+    const decryptor = Decryptor.init(testing.allocator, test_data_enc, "password");
+    try testing.expectError(DecryptError.InvalidHeaderMac, decryptor);
 }
 
 test "decrypt from invalid input length" {
     {
         const data = [_]u8{0} ** ((root.header_length + root.tag_length) - 1);
-        const decryptor = root.Decryptor.init(testing.allocator, &data, passphrase);
-        try testing.expectError(root.DecryptError.InvalidLength, decryptor);
+        const decryptor = Decryptor.init(testing.allocator, &data, passphrase);
+        try testing.expectError(DecryptError.InvalidLength, decryptor);
     }
 
     {
         const data = [_]u8{0} ** (root.header_length + root.tag_length);
-        const decryptor = root.Decryptor.init(testing.allocator, &data, passphrase);
-        try testing.expectError(root.DecryptError.InvalidMagicNumber, decryptor);
+        const decryptor = Decryptor.init(testing.allocator, &data, passphrase);
+        try testing.expectError(DecryptError.InvalidMagicNumber, decryptor);
     }
 }
 
 test "decrypt from invalid magic number" {
     var data = test_data_enc.*;
     data[0] = 'b';
-    const decryptor = root.Decryptor.init(testing.allocator, &data, passphrase);
-    try testing.expectError(root.DecryptError.InvalidMagicNumber, decryptor);
+    const decryptor = Decryptor.init(testing.allocator, &data, passphrase);
+    try testing.expectError(DecryptError.InvalidMagicNumber, decryptor);
 }
 
 test "decrypt from unsupported version" {
     const data = @embedFile("data/v0/data.txt.abcrypt");
-    const decryptor = root.Decryptor.init(testing.allocator, data, passphrase);
-    try testing.expectError(root.DecryptError.UnsupportedVersion, decryptor);
+    const decryptor = Decryptor.init(testing.allocator, data, passphrase);
+    try testing.expectError(DecryptError.UnsupportedVersion, decryptor);
 }
 
 test "decrypt from unknown version" {
     var data = test_data_enc.*;
     data[7] = 2;
-    const decryptor = root.Decryptor.init(testing.allocator, &data, passphrase);
-    try testing.expectError(root.DecryptError.UnknownVersion, decryptor);
+    const decryptor = Decryptor.init(testing.allocator, &data, passphrase);
+    try testing.expectError(DecryptError.UnknownVersion, decryptor);
 }
 
 test "decrypt from invalid params" {
@@ -87,46 +90,46 @@ test "decrypt from invalid params" {
 
     {
         var memory_cost: [4]u8 = undefined;
-        mem.writeInt(u32, &memory_cost, 7, builtin.Endian.little);
+        mem.writeInt(u32, &memory_cost, 7, Endian.little);
         data[16..20].* = memory_cost;
-        const decryptor = root.Decryptor.init(testing.allocator, &data, passphrase);
-        try testing.expectError(root.DecryptError.InvalidHeaderMac, decryptor);
+        const decryptor = Decryptor.init(testing.allocator, &data, passphrase);
+        try testing.expectError(DecryptError.WeakParameters, decryptor);
     }
 
     {
         var time_cost: [4]u8 = undefined;
-        mem.writeInt(u32, &time_cost, 0, builtin.Endian.little);
+        mem.writeInt(u32, &time_cost, 0, Endian.little);
         data[20..24].* = time_cost;
-        const decryptor = root.Decryptor.init(testing.allocator, &data, passphrase);
-        try testing.expectError(root.DecryptError.WeakParameters, decryptor);
+        const decryptor = Decryptor.init(testing.allocator, &data, passphrase);
+        try testing.expectError(DecryptError.WeakParameters, decryptor);
     }
 
     {
         var parallelism: [4]u8 = undefined;
-        mem.writeInt(u32, &parallelism, 0, builtin.Endian.little);
+        mem.writeInt(u32, &parallelism, 0, Endian.little);
         data[24..28].* = parallelism;
-        const decryptor = root.Decryptor.init(testing.allocator, &data, passphrase);
-        try testing.expectError(root.DecryptError.WeakParameters, decryptor);
+        const decryptor = Decryptor.init(testing.allocator, &data, passphrase);
+        try testing.expectError(DecryptError.WeakParameters, decryptor);
     }
 }
 
 test "decrypt from invalid header mac" {
     var data = test_data_enc.*;
     mem.reverse(u8, data[84..148]);
-    const decryptor = root.Decryptor.init(testing.allocator, &data, passphrase);
-    try testing.expectError(root.DecryptError.InvalidHeaderMac, decryptor);
+    const decryptor = Decryptor.init(testing.allocator, &data, passphrase);
+    try testing.expectError(DecryptError.InvalidHeaderMac, decryptor);
 }
 
 test "decrypt from invalid mac" {
     var data = test_data_enc.*;
     mem.reverse(u8, data[(data.len - root.tag_length)..]);
-    const decryptor = try root.Decryptor.init(testing.allocator, &data, passphrase);
+    const decryptor = try Decryptor.init(testing.allocator, &data, passphrase);
     var plaintext: [test_data.len]u8 = undefined;
     const result = decryptor.decrypt(&plaintext);
-    try testing.expectError(root.DecryptError.AuthenticationFailed, result);
+    try testing.expectError(DecryptError.AuthenticationFailed, result);
 }
 
 test "get output length" {
-    const decryptor = try root.Decryptor.init(testing.allocator, test_data_enc, passphrase);
+    const decryptor = try Decryptor.init(testing.allocator, test_data_enc, passphrase);
     try testing.expectEqual(test_data.len, decryptor.outLen());
 }

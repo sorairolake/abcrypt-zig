@@ -6,37 +6,42 @@
 
 const std = @import("std");
 
-const errors = @import("errors.zig");
 const format = @import("format.zig");
 
-const crypto = std.crypto;
+const XChaCha20Poly1305 = std.crypto.aead.chacha_poly.XChaCha20Poly1305;
+const AuthenticationError = std.crypto.errors.AuthenticationError;
+const argon2 = std.crypto.pwhash.argon2;
 const debug = std.debug;
-const mem = std.mem;
+const Allocator = std.mem.Allocator;
 const testing = std.testing;
+
+const DecryptError = @import("errors.zig").DecryptError;
+const DerivedKey = format.DerivedKey;
+const Header = format.Header;
 
 /// Decryptor for the abcrypt encrypted data format.
 pub const Decryptor = struct {
-    header: format.Header,
-    dk: format.DerivedKey,
+    header: Header,
+    dk: DerivedKey,
     ciphertext: []const u8,
-    tag: [crypto.aead.chacha_poly.XChaCha20Poly1305.tag_length]u8,
+    tag: [XChaCha20Poly1305.tag_length]u8,
 
     const Self = @This();
 
     /// Creates a new `Decryptor`.
     pub fn init(
-        allocator: mem.Allocator,
+        allocator: Allocator,
         ciphertext: []const u8,
         passphrase: []const u8,
-    ) errors.DecryptError!Self {
-        var header = try format.Header.parse(ciphertext);
+    ) DecryptError!Self {
+        var header = try Header.parse(ciphertext);
         debug.assert(header.argon2_version == 0x13);
 
         // The derived key size is 96 bytes. The first 256 bits are for
         // XChaCha20-Poly1305 key, and the last 512 bits are for
         // BLAKE2b-512-MAC key.
-        var keys: [format.DerivedKey.length]u8 = undefined;
-        try crypto.pwhash.argon2.kdf(
+        var keys: [DerivedKey.length]u8 = undefined;
+        try argon2.kdf(
             allocator,
             &keys,
             passphrase,
@@ -44,11 +49,11 @@ pub const Decryptor = struct {
             header.params,
             header.argon2_type,
         );
-        const dk = format.DerivedKey.init(keys);
+        const dk = DerivedKey.init(keys);
 
-        try header.verify_mac(dk.mac, ciphertext[84..format.Header.length].*);
-        const body = ciphertext[format.Header.length..(ciphertext.len - format.tag_length)];
-        var tag: [crypto.aead.chacha_poly.XChaCha20Poly1305.tag_length]u8 = undefined;
+        try header.verify_mac(dk.mac, ciphertext[84..Header.length].*);
+        const body = ciphertext[Header.length..(ciphertext.len - format.tag_length)];
+        var tag: [XChaCha20Poly1305.tag_length]u8 = undefined;
         @memcpy(&tag, ciphertext[(ciphertext.len - format.tag_length)..]);
         return .{ .header = header, .dk = dk, .ciphertext = body, .tag = tag };
     }
@@ -61,11 +66,11 @@ pub const Decryptor = struct {
     }
 
     /// Decrypts the ciphertext into `buf`.
-    pub fn decrypt(self: Self, buf: []u8) crypto.errors.AuthenticationError!void {
+    pub fn decrypt(self: Self, buf: []u8) AuthenticationError!void {
         debug.assert(buf.len == self.outLen());
 
         const aad = "";
-        return crypto.aead.chacha_poly.XChaCha20Poly1305.decrypt(
+        return XChaCha20Poly1305.decrypt(
             buf,
             self.ciphertext,
             self.tag,

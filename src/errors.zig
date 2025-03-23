@@ -6,8 +6,9 @@
 
 const std = @import("std");
 
-const crypto = std.crypto;
-const posix = std.posix;
+const AuthenticationError = std.crypto.errors.AuthenticationError;
+const KdfError = std.crypto.pwhash.KdfError;
+const GetRandomError = std.posix.GetRandomError;
 
 /// An error occurs during decryption operations.
 pub const DecryptError = error{
@@ -31,7 +32,7 @@ pub const DecryptError = error{
 
     /// The MAC (authentication tag) of the header was invalid.
     InvalidHeaderMac,
-} || crypto.errors.AuthenticationError || crypto.pwhash.KdfError;
+} || AuthenticationError || KdfError;
 
 /// An error occurs during encryption operations.
-pub const EncryptError = crypto.pwhash.KdfError || posix.GetRandomError;
+pub const EncryptError = KdfError || GetRandomError;
