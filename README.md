@@ -54,11 +54,6 @@ This library is compatible with Zig version 0.14.0.
 The upstream repository is available at
 <https://github.com/sorairolake/abcrypt-zig.git>.
 
-The source code is also available at:
-
-- <https://gitlab.com/sorairolake/abcrypt-zig.git>
-- <https://codeberg.org/sorairolake/abcrypt-zig.git>
-
 ## Changelog
 
 Please see [CHANGELOG.adoc].
