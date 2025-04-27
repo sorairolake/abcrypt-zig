@@ -41,7 +41,7 @@ pub const Encryptor = struct {
         plaintext: []const u8,
         passphrase: []const u8,
     ) EncryptError!Self {
-        return initWithParams(allocator, plaintext, passphrase, Params.owasp_2id);
+        return Self.initWithParams(allocator, plaintext, passphrase, Params.owasp_2id);
     }
 
     test init {
@@ -61,7 +61,7 @@ pub const Encryptor = struct {
         passphrase: []const u8,
         params: Params,
     ) EncryptError!Self {
-        return initWithContext(allocator, plaintext, passphrase, Mode.argon2id, params);
+        return Self.initWithContext(allocator, plaintext, passphrase, Mode.argon2id, params);
     }
 
     test initWithParams {
