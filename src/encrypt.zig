@@ -158,7 +158,3 @@ pub const Encryptor = struct {
         try testing.expectEqual(178, cipher.outLen());
     }
 };
-
-test {
-    _ = @import("tests/encrypt.zig");
-}

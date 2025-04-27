@@ -41,7 +41,3 @@ pub const Params = struct {
         try testing.expectEqual(4, params.parallelism);
     }
 };
-
-test {
-    _ = @import("tests/params.zig");
-}

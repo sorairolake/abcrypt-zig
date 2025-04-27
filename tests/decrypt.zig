@@ -4,14 +4,14 @@
 
 const std = @import("std");
 
-const root = @import("../root.zig");
+const abcrypt = @import("abcrypt");
 
 const Endian = std.builtin.Endian;
 const mem = std.mem;
 const testing = std.testing;
 
-const DecryptError = root.DecryptError;
-const Decryptor = root.Decryptor;
+const DecryptError = abcrypt.DecryptError;
+const Decryptor = abcrypt.Decryptor;
 
 const passphrase = "passphrase";
 const test_data = @embedFile("data/data.txt");
@@ -53,13 +53,13 @@ test "decrypt from incorrect passphrase" {
 
 test "decrypt from invalid input length" {
     {
-        const data = [_]u8{0} ** ((root.header_length + root.tag_length) - 1);
+        const data = [_]u8{0} ** ((abcrypt.header_length + abcrypt.tag_length) - 1);
         const decryptor = Decryptor.init(testing.allocator, &data, passphrase);
         try testing.expectError(DecryptError.InvalidLength, decryptor);
     }
 
     {
-        const data = [_]u8{0} ** (root.header_length + root.tag_length);
+        const data = [_]u8{0} ** (abcrypt.header_length + abcrypt.tag_length);
         const decryptor = Decryptor.init(testing.allocator, &data, passphrase);
         try testing.expectError(DecryptError.InvalidMagicNumber, decryptor);
     }
@@ -122,7 +122,7 @@ test "decrypt from invalid header mac" {
 
 test "decrypt from invalid mac" {
     var data = test_data_enc.*;
-    mem.reverse(u8, data[(data.len - root.tag_length)..]);
+    mem.reverse(u8, data[(data.len - abcrypt.tag_length)..]);
     const decryptor = try Decryptor.init(testing.allocator, &data, passphrase);
     var plaintext: [test_data.len]u8 = undefined;
     const result = decryptor.decrypt(&plaintext);

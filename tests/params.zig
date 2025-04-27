@@ -4,7 +4,7 @@
 
 const testing = @import("std").testing;
 
-const Params = @import("../root.zig").Params;
+const Params = @import("abcrypt").Params;
 
 const test_data_enc = @embedFile("data/v1/argon2id/v0x13/data.txt.abcrypt");
 
