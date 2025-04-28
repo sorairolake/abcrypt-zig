@@ -42,7 +42,7 @@ test "encrypt" {
     const decryptor = try Decryptor.init(testing.allocator, &ciphertext, passphrase);
     var plaintext: [test_data.len]u8 = undefined;
     try decryptor.decrypt(&plaintext);
-    try testing.expectEqualSlices(u8, test_data, &plaintext);
+    try testing.expectEqual(test_data.*, plaintext);
 }
 
 test "encrypt with params" {
@@ -73,7 +73,7 @@ test "encrypt with params" {
     const decryptor = try Decryptor.init(testing.allocator, &ciphertext, passphrase);
     var plaintext: [test_data.len]u8 = undefined;
     try decryptor.decrypt(&plaintext);
-    try testing.expectEqualSlices(u8, test_data, &plaintext);
+    try testing.expectEqual(test_data.*, plaintext);
 }
 
 test "encrypt with context" {
@@ -106,7 +106,7 @@ test "encrypt with context" {
         const decryptor = try Decryptor.init(testing.allocator, &ciphertext, passphrase);
         var plaintext: [test_data.len]u8 = undefined;
         try decryptor.decrypt(&plaintext);
-        try testing.expectEqualSlices(u8, test_data, &plaintext);
+        try testing.expectEqual(test_data.*, plaintext);
     }
     {
         const params = argon2.Params{ .t = 4, .m = 9216, .p = 1 };
@@ -137,7 +137,7 @@ test "encrypt with context" {
         const decryptor = try Decryptor.init(testing.allocator, &ciphertext, passphrase);
         var plaintext: [test_data.len]u8 = undefined;
         try decryptor.decrypt(&plaintext);
-        try testing.expectEqualSlices(u8, test_data, &plaintext);
+        try testing.expectEqual(test_data.*, plaintext);
     }
     {
         const params = argon2.Params{ .t = 3, .m = 32, .p = 4 };
@@ -168,7 +168,7 @@ test "encrypt with context" {
         const decryptor = try Decryptor.init(testing.allocator, &ciphertext, passphrase);
         var plaintext: [test_data.len]u8 = undefined;
         try decryptor.decrypt(&plaintext);
-        try testing.expectEqualSlices(u8, test_data, &plaintext);
+        try testing.expectEqual(test_data.*, plaintext);
     }
 }
 
