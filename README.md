@@ -29,21 +29,7 @@ exe.root_module.addImport("abcrypt", abcrypt.module("abcrypt"));
 
 ### Documentation
 
-To build the documentation:
-
-```sh
-zig build doc
-```
-
-The result is generated in `zig-out/doc/abcrypt`.
-
-If you want to preview this, run a HTTP server locally. For example:
-
-```sh
-python -m http.server -d zig-out/doc/abcrypt
-```
-
-Then open `http://localhost:8000/` in your browser.
+See the [documentation][docs-url] for more details.
 
 ## Zig version
 
@@ -76,6 +62,7 @@ licensing information.
 [ci-badge]: https://img.shields.io/github/actions/workflow/status/sorairolake/abcrypt-zig/CI.yaml?branch=develop&style=for-the-badge&logo=github&label=CI
 [ci-url]: https://github.com/sorairolake/abcrypt-zig/actions?query=branch%3Adevelop+workflow%3ACI++
 [abcrypt encrypted data format]: https://sorairolake.github.io/abcrypt/book/format.html
+[docs-url]: https://sorairolake.github.io/abcrypt-zig/
 [CHANGELOG.adoc]: CHANGELOG.adoc
 [CONTRIBUTING.adoc]: CONTRIBUTING.adoc
 [AUTHORS.adoc]: AUTHORS.adoc
