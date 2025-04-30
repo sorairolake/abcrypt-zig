@@ -53,13 +53,13 @@ test "decrypt from incorrect passphrase" {
 
 test "decrypt from invalid input length" {
     {
-        const data = [_]u8{0} ** ((abcrypt.header_length + abcrypt.tag_length) - 1);
+        const data = [_]u8{0x00} ** ((abcrypt.header_length + abcrypt.tag_length) - 1);
         const decryptor = Decryptor.init(testing.allocator, &data, passphrase);
         try testing.expectError(DecryptError.InvalidLength, decryptor);
     }
 
     {
-        const data = [_]u8{0} ** (abcrypt.header_length + abcrypt.tag_length);
+        const data = [_]u8{0x00} ** (abcrypt.header_length + abcrypt.tag_length);
         const decryptor = Decryptor.init(testing.allocator, &data, passphrase);
         try testing.expectError(DecryptError.InvalidMagicNumber, decryptor);
     }
