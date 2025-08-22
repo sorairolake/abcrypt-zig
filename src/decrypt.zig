@@ -104,7 +104,3 @@ pub const Decryptor = struct {
         try testing.expectEqual(14, cipher.outLen());
     }
 };
-
-test {
-    _ = @import("tests/decrypt.zig");
-}

@@ -3,33 +3,33 @@
 # SPDX-License-Identifier: Apache-2.0 OR MIT
 
 # Run default recipe
-@_default:
+_default:
     just -l
 
 # Build a project
-@build:
+build:
     zig build --summary all
 
 # Run tests
-@test:
+test:
     zig build test --summary all
 
 # Run the formatter
-@fmt:
+fmt:
     zig fmt .
 
 # Build the package documentation
-@doc:
+doc:
     zig build doc --summary all
 
 # Run the linter for GitHub Actions workflow files
-@lint-github-actions:
+lint-github-actions:
     actionlint -verbose
 
 # Run the formatter for the README
-@fmt-readme:
+fmt-readme:
     npx prettier -w README.md
 
 # Increment the version
-@bump part:
+bump part:
     bump-my-version bump {{ part }}

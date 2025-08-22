@@ -75,17 +75,14 @@ pub const Header = struct {
     }
 
     pub fn parse(data: []const u8) DecryptError!Self {
-        if (data.len < length + tag_length) {
+        if (data.len < Self.length + tag_length)
             return error.InvalidLength;
-        }
 
-        if (!mem.startsWith(u8, data, &signature)) {
+        if (!mem.startsWith(u8, data, &Self.signature))
             return error.InvalidMagicNumber;
-        }
         const version = meta.intToEnum(Version, data[7]) catch return error.UnknownVersion;
-        if (version != Version.v1) {
+        if (version != Version.v1)
             return error.UnsupportedVersion;
-        }
         const argon2_type = meta.intToEnum(
             Mode,
             mem.readInt(u32, data[8..12], Endian.little),
@@ -123,14 +120,13 @@ pub const Header = struct {
         var mac: [Blake2b512.digest_length]u8 = undefined;
         const options = Blake2b512.Options{ .key = &key };
         Blake2b512.hash(self.asBytes()[0..84], &mac, options);
-        if (!mem.eql(u8, &mac, &tag)) {
+        if (!mem.eql(u8, &mac, &tag))
             return error.InvalidHeaderMac;
-        }
         self.mac = mac;
     }
 
-    pub fn asBytes(self: Self) [length]u8 {
-        var header: [length]u8 = undefined;
+    pub fn asBytes(self: Self) [Self.length]u8 {
+        var header: [Self.length]u8 = undefined;
         header[0..7].* = self.magic_number;
         header[7] = @intFromEnum(self.version);
         var argon2_type: [4]u8 = undefined;
@@ -164,7 +160,7 @@ pub const DerivedKey = struct {
 
     pub const length = @sizeOf(Self);
 
-    pub fn init(derived_key: [length]u8) Self {
+    pub fn init(derived_key: [Self.length]u8) Self {
         const encrypt = derived_key[0..32].*;
         const mac = derived_key[32..].*;
         return .{ .encrypt = encrypt, .mac = mac };
