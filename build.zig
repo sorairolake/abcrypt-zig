@@ -12,18 +12,22 @@ pub fn build(b: *std.Build) void {
 
     const unit_test_step = b.step("unit-test", "Run only the unit tests");
     const unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/root.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/root.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     const run_unit_tests = b.addRunArtifact(unit_tests);
     unit_test_step.dependOn(&run_unit_tests.step);
 
     const integration_test_step = b.step("integration-test", "Run only the integration tests");
     const integration_tests = b.addTest(.{
-        .root_source_file = b.path("tests/root.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/root.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     integration_tests.root_module.addImport("abcrypt", abcrypt_mod);
     const run_integration_tests = b.addRunArtifact(integration_tests);
@@ -36,9 +40,11 @@ pub fn build(b: *std.Build) void {
     const doc_step = b.step("doc", "Build the package documentation");
     const doc_obj = b.addObject(.{
         .name = "abcrypt",
-        .root_source_file = b.path("src/root.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/root.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     const install_doc = b.addInstallDirectory(.{
         .source_dir = doc_obj.getEmittedDocs(),
