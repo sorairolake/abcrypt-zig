@@ -33,7 +33,7 @@ See the [documentation][docs-url] for more details.
 
 ## Zig version
 
-This library is compatible with Zig version 0.15.1.
+This library is compatible with Zig version 0.16.0.
 
 ## Source code
 

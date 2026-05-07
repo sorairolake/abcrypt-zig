@@ -21,5 +21,5 @@ pub const Params = @import("params.zig").Params;
 test {
     const testing = @import("std").testing;
 
-    testing.refAllDeclsRecursive(@This());
+    testing.refAllDecls(@This());
 }

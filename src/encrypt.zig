@@ -13,6 +13,7 @@ const argon2 = std.crypto.pwhash.argon2;
 const Mode = argon2.Mode;
 const Params = argon2.Params;
 const debug = std.debug;
+const Io = std.Io;
 const math = std.math;
 const mem = std.mem;
 const Allocator = mem.Allocator;
@@ -40,15 +41,16 @@ pub const Encryptor = struct {
         allocator: Allocator,
         plaintext: []const u8,
         passphrase: []const u8,
+        io: Io,
     ) EncryptError!Self {
-        return Self.initWithParams(allocator, plaintext, passphrase, Params.owasp_2id);
+        return Self.initWithParams(allocator, plaintext, passphrase, Params.owasp_2id, io);
     }
 
     test init {
         const data = "Hello, world!\n";
         const passphrase = "passphrase";
 
-        _ = try Encryptor.init(testing.allocator, data, passphrase);
+        _ = try Encryptor.init(testing.allocator, data, passphrase, testing.io);
     }
 
     /// Creates a new `Encryptor` with the specified `Params`.
@@ -60,8 +62,9 @@ pub const Encryptor = struct {
         plaintext: []const u8,
         passphrase: []const u8,
         params: Params,
+        io: Io,
     ) EncryptError!Self {
-        return Self.initWithContext(allocator, plaintext, passphrase, Mode.argon2id, params);
+        return Self.initWithContext(allocator, plaintext, passphrase, Mode.argon2id, params, io);
     }
 
     test initWithParams {
@@ -69,7 +72,7 @@ pub const Encryptor = struct {
         const passphrase = "passphrase";
 
         const params = Params{ .t = 3, .m = 32, .p = 4 };
-        _ = try Encryptor.initWithParams(testing.allocator, data, passphrase, params);
+        _ = try Encryptor.initWithParams(testing.allocator, data, passphrase, params, testing.io);
     }
 
     /// Creates a new `Encryptor` with the specified `Mode` and `Params`.
@@ -81,8 +84,9 @@ pub const Encryptor = struct {
         passphrase: []const u8,
         argon2_type: Mode,
         params: Params,
+        io: Io,
     ) EncryptError!Self {
-        var header = try Header.init(argon2_type, params);
+        var header = try Header.init(argon2_type, params, io);
 
         // The derived key size is 96 bytes. The first 256 bits are for
         // XChaCha20-Poly1305 key, and the last 512 bits are for
@@ -95,6 +99,7 @@ pub const Encryptor = struct {
             &header.salt,
             header.params,
             header.argon2_type,
+            io,
         );
         const dk = DerivedKey.init(keys);
 
@@ -108,7 +113,14 @@ pub const Encryptor = struct {
 
         const mode = Mode.argon2i;
         const params = Params{ .t = 3, .m = 32, .p = 4 };
-        _ = try Encryptor.initWithContext(testing.allocator, data, passphrase, mode, params);
+        _ = try Encryptor.initWithContext(
+            testing.allocator,
+            data,
+            passphrase,
+            mode,
+            params,
+            testing.io,
+        );
     }
 
     /// Encrypts the plaintext into `buf`.
@@ -136,7 +148,13 @@ pub const Encryptor = struct {
         const passphrase = "passphrase";
 
         const params = Params{ .t = 3, .m = 32, .p = 4 };
-        const cipher = try Encryptor.initWithParams(testing.allocator, data, passphrase, params);
+        const cipher = try Encryptor.initWithParams(
+            testing.allocator,
+            data,
+            passphrase,
+            params,
+            testing.io,
+        );
         var buf: [178]u8 = undefined;
         cipher.encrypt(&buf);
         try testing.expect(!mem.eql(u8, &buf, data));
@@ -154,7 +172,13 @@ pub const Encryptor = struct {
         const passphrase = "passphrase";
 
         const params = Params{ .t = 3, .m = 32, .p = 4 };
-        const cipher = try Encryptor.initWithParams(testing.allocator, data, passphrase, params);
+        const cipher = try Encryptor.initWithParams(
+            testing.allocator,
+            data,
+            passphrase,
+            params,
+            testing.io,
+        );
         try testing.expectEqual(178, cipher.outLen());
     }
 };

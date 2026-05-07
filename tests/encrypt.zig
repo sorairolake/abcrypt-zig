@@ -9,8 +9,8 @@ const abcrypt = @import("abcrypt");
 const Endian = std.builtin.Endian;
 const argon2 = std.crypto.pwhash.argon2;
 const Mode = argon2.Mode;
+const enums = std.enums;
 const mem = std.mem;
-const meta = std.meta;
 const testing = std.testing;
 
 const Decryptor = abcrypt.Decryptor;
@@ -21,15 +21,12 @@ const passphrase = "passphrase";
 const test_data = @embedFile("data/data.txt");
 
 test "encrypt" {
-    const encryptor = try Encryptor.init(testing.allocator, test_data, passphrase);
+    const encryptor = try Encryptor.init(testing.allocator, test_data, passphrase, testing.io);
     var ciphertext: [test_data.len + abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
     encryptor.encrypt(&ciphertext);
     try testing.expect(!mem.eql(u8, &ciphertext, test_data));
 
-    const argon2_type = try meta.intToEnum(
-        Mode,
-        mem.readInt(u32, ciphertext[8..12], Endian.little),
-    );
+    const argon2_type = enums.fromInt(Mode, mem.readInt(u32, ciphertext[8..12], Endian.little)).?;
     try testing.expectEqual(Mode.argon2id, argon2_type);
     const argon2_version = mem.readInt(u32, ciphertext[12..16], Endian.little);
     try testing.expectEqual(0x13, argon2_version);
@@ -39,7 +36,7 @@ test "encrypt" {
     try testing.expectEqual(2, parameters.time_cost);
     try testing.expectEqual(1, parameters.parallelism);
 
-    const decryptor = try Decryptor.init(testing.allocator, &ciphertext, passphrase);
+    const decryptor = try Decryptor.init(testing.allocator, &ciphertext, passphrase, testing.io);
     var plaintext: [test_data.len]u8 = undefined;
     try decryptor.decrypt(&plaintext);
     try testing.expectEqual(test_data.*, plaintext);
@@ -52,15 +49,13 @@ test "encrypt with params" {
         test_data,
         passphrase,
         params,
+        testing.io,
     );
     var ciphertext: [test_data.len + abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
     encryptor.encrypt(&ciphertext);
     try testing.expect(!mem.eql(u8, &ciphertext, test_data));
 
-    const argon2_type = try meta.intToEnum(
-        Mode,
-        mem.readInt(u32, ciphertext[8..12], Endian.little),
-    );
+    const argon2_type = enums.fromInt(Mode, mem.readInt(u32, ciphertext[8..12], Endian.little)).?;
     try testing.expectEqual(Mode.argon2id, argon2_type);
     const argon2_version = mem.readInt(u32, ciphertext[12..16], Endian.little);
     try testing.expectEqual(0x13, argon2_version);
@@ -70,7 +65,7 @@ test "encrypt with params" {
     try testing.expectEqual(3, parameters.time_cost);
     try testing.expectEqual(4, parameters.parallelism);
 
-    const decryptor = try Decryptor.init(testing.allocator, &ciphertext, passphrase);
+    const decryptor = try Decryptor.init(testing.allocator, &ciphertext, passphrase, testing.io);
     var plaintext: [test_data.len]u8 = undefined;
     try decryptor.decrypt(&plaintext);
     try testing.expectEqual(test_data.*, plaintext);
@@ -85,15 +80,16 @@ test "encrypt with context" {
             passphrase,
             Mode.argon2d,
             params,
+            testing.io,
         );
         var ciphertext: [test_data.len + abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
         encryptor.encrypt(&ciphertext);
         try testing.expect(!mem.eql(u8, &ciphertext, test_data));
 
-        const argon2_type = try meta.intToEnum(
+        const argon2_type = enums.fromInt(
             Mode,
             mem.readInt(u32, ciphertext[8..12], Endian.little),
-        );
+        ).?;
         try testing.expectEqual(Mode.argon2d, argon2_type);
         const argon2_version = mem.readInt(u32, ciphertext[12..16], Endian.little);
         try testing.expectEqual(0x13, argon2_version);
@@ -103,7 +99,12 @@ test "encrypt with context" {
         try testing.expectEqual(2, parameters.time_cost);
         try testing.expectEqual(1, parameters.parallelism);
 
-        const decryptor = try Decryptor.init(testing.allocator, &ciphertext, passphrase);
+        const decryptor = try Decryptor.init(
+            testing.allocator,
+            &ciphertext,
+            passphrase,
+            testing.io,
+        );
         var plaintext: [test_data.len]u8 = undefined;
         try decryptor.decrypt(&plaintext);
         try testing.expectEqual(test_data.*, plaintext);
@@ -116,15 +117,16 @@ test "encrypt with context" {
             passphrase,
             Mode.argon2i,
             params,
+            testing.io,
         );
         var ciphertext: [test_data.len + abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
         encryptor.encrypt(&ciphertext);
         try testing.expect(!mem.eql(u8, &ciphertext, test_data));
 
-        const argon2_type = try meta.intToEnum(
+        const argon2_type = enums.fromInt(
             Mode,
             mem.readInt(u32, ciphertext[8..12], Endian.little),
-        );
+        ).?;
         try testing.expectEqual(Mode.argon2i, argon2_type);
         const argon2_version = mem.readInt(u32, ciphertext[12..16], Endian.little);
         try testing.expectEqual(0x13, argon2_version);
@@ -134,7 +136,12 @@ test "encrypt with context" {
         try testing.expectEqual(4, parameters.time_cost);
         try testing.expectEqual(1, parameters.parallelism);
 
-        const decryptor = try Decryptor.init(testing.allocator, &ciphertext, passphrase);
+        const decryptor = try Decryptor.init(
+            testing.allocator,
+            &ciphertext,
+            passphrase,
+            testing.io,
+        );
         var plaintext: [test_data.len]u8 = undefined;
         try decryptor.decrypt(&plaintext);
         try testing.expectEqual(test_data.*, plaintext);
@@ -147,15 +154,16 @@ test "encrypt with context" {
             passphrase,
             Mode.argon2id,
             params,
+            testing.io,
         );
         var ciphertext: [test_data.len + abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
         encryptor.encrypt(&ciphertext);
         try testing.expect(!mem.eql(u8, &ciphertext, test_data));
 
-        const argon2_type = try meta.intToEnum(
+        const argon2_type = enums.fromInt(
             Mode,
             mem.readInt(u32, ciphertext[8..12], Endian.little),
-        );
+        ).?;
         try testing.expectEqual(Mode.argon2id, argon2_type);
         const argon2_version = mem.readInt(u32, ciphertext[12..16], Endian.little);
         try testing.expectEqual(0x13, argon2_version);
@@ -165,7 +173,12 @@ test "encrypt with context" {
         try testing.expectEqual(3, parameters.time_cost);
         try testing.expectEqual(4, parameters.parallelism);
 
-        const decryptor = try Decryptor.init(testing.allocator, &ciphertext, passphrase);
+        const decryptor = try Decryptor.init(
+            testing.allocator,
+            &ciphertext,
+            passphrase,
+            testing.io,
+        );
         var plaintext: [test_data.len]u8 = undefined;
         try decryptor.decrypt(&plaintext);
         try testing.expectEqual(test_data.*, plaintext);
@@ -174,13 +187,25 @@ test "encrypt with context" {
 
 test "encrypt with invalid Argon2 parameters" {
     const params = argon2.Params{ .t = 0, .m = 0, .p = 0 };
-    const encryptor = Encryptor.initWithParams(testing.allocator, test_data, passphrase, params);
+    const encryptor = Encryptor.initWithParams(
+        testing.allocator,
+        test_data,
+        passphrase,
+        params,
+        testing.io,
+    );
     try testing.expectError(EncryptError.WeakParameters, encryptor);
 }
 
 test "encrypt to minimum output length" {
     const params = argon2.Params{ .t = 3, .m = 32, .p = 4 };
-    const encryptor = try Encryptor.initWithParams(testing.allocator, "", passphrase, params);
+    const encryptor = try Encryptor.initWithParams(
+        testing.allocator,
+        "",
+        passphrase,
+        params,
+        testing.io,
+    );
     try testing.expectEqual(abcrypt.header_length + abcrypt.tag_length, encryptor.outLen());
     var ciphertext: [abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
     encryptor.encrypt(&ciphertext);
@@ -193,6 +218,7 @@ test "extract magic number" {
         test_data,
         passphrase,
         params,
+        testing.io,
     );
     var ciphertext: [test_data.len + abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
     encryptor.encrypt(&ciphertext);
@@ -206,6 +232,7 @@ test "extract version" {
         test_data,
         passphrase,
         params,
+        testing.io,
     );
     var ciphertext: [test_data.len + abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
     encryptor.encrypt(&ciphertext);
@@ -222,15 +249,16 @@ test "extract Argon2 type" {
             passphrase,
             Mode.argon2d,
             params,
+            testing.io,
         );
         var ciphertext: [test_data.len + abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
         encryptor.encrypt(&ciphertext);
         try testing.expectEqual(0, mem.readInt(u32, ciphertext[8..12], Endian.little));
 
-        const argon2_type = try meta.intToEnum(
+        const argon2_type = enums.fromInt(
             Mode,
             mem.readInt(u32, ciphertext[8..12], Endian.little),
-        );
+        ).?;
         try testing.expectEqual(Mode.argon2d, argon2_type);
     }
     {
@@ -240,15 +268,16 @@ test "extract Argon2 type" {
             passphrase,
             Mode.argon2i,
             params,
+            testing.io,
         );
         var ciphertext: [test_data.len + abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
         encryptor.encrypt(&ciphertext);
         try testing.expectEqual(1, mem.readInt(u32, ciphertext[8..12], Endian.little));
 
-        const argon2_type = try meta.intToEnum(
+        const argon2_type = enums.fromInt(
             Mode,
             mem.readInt(u32, ciphertext[8..12], Endian.little),
-        );
+        ).?;
         try testing.expectEqual(Mode.argon2i, argon2_type);
     }
     {
@@ -258,15 +287,16 @@ test "extract Argon2 type" {
             passphrase,
             Mode.argon2id,
             params,
+            testing.io,
         );
         var ciphertext: [test_data.len + abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
         encryptor.encrypt(&ciphertext);
         try testing.expectEqual(2, mem.readInt(u32, ciphertext[8..12], Endian.little));
 
-        const argon2_type = try meta.intToEnum(
+        const argon2_type = enums.fromInt(
             Mode,
             mem.readInt(u32, ciphertext[8..12], Endian.little),
-        );
+        ).?;
         try testing.expectEqual(Mode.argon2id, argon2_type);
     }
 }
@@ -279,6 +309,7 @@ test "extract Argon2 version" {
         passphrase,
         Mode.argon2id,
         params,
+        testing.io,
     );
     var ciphertext: [test_data.len + abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
     encryptor.encrypt(&ciphertext);
@@ -295,6 +326,7 @@ test "extract memory cost" {
         test_data,
         passphrase,
         params,
+        testing.io,
     );
     var ciphertext: [test_data.len + abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
     encryptor.encrypt(&ciphertext);
@@ -311,6 +343,7 @@ test "extract time cost" {
         test_data,
         passphrase,
         params,
+        testing.io,
     );
     var ciphertext: [test_data.len + abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
     encryptor.encrypt(&ciphertext);
@@ -327,6 +360,7 @@ test "extract parallelism" {
         test_data,
         passphrase,
         params,
+        testing.io,
     );
     var ciphertext: [test_data.len + abcrypt.header_length + abcrypt.tag_length]u8 = undefined;
     encryptor.encrypt(&ciphertext);
@@ -343,6 +377,7 @@ test "get output length" {
         test_data,
         passphrase,
         params,
+        testing.io,
     );
     try testing.expectEqual(
         test_data.len + abcrypt.header_length + abcrypt.tag_length,

@@ -14,7 +14,7 @@ test {
     _ = @import("encrypt.zig");
     _ = @import("params.zig");
 
-    testing.refAllDeclsRecursive(@This());
+    testing.refAllDecls(@This());
 }
 
 test "header length" {

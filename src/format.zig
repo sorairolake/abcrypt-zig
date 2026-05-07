@@ -13,10 +13,10 @@ const Blake2b512 = std.crypto.hash.blake2.Blake2b512;
 const Mode = std.crypto.pwhash.argon2.Mode;
 const Params = std.crypto.pwhash.argon2.Params;
 const debug = std.debug;
+const enums = std.enums;
+const Io = std.Io;
+const RandomSecureError = Io.RandomSecureError;
 const mem = std.mem;
-const meta = std.meta;
-const posix = std.posix;
-const GetRandomError = std.posix.GetRandomError;
 const testing = std.testing;
 
 const DecryptError = @import("errors.zig").DecryptError;
@@ -54,12 +54,12 @@ pub const Header = struct {
     /// The number of bytes of the header.
     pub const length = 148;
 
-    pub fn init(argon2_type: Mode, params: Params) GetRandomError!Self {
+    pub fn init(argon2_type: Mode, params: Params, io: Io) RandomSecureError!Self {
         debug.assert(params.secret == null);
         debug.assert(params.ad == null);
 
         var seed: [DefaultCsprng.secret_seed_length]u8 = undefined;
-        try posix.getrandom(&seed);
+        try io.randomSecure(&seed);
         var rng = DefaultCsprng.init(seed);
         var salt: [32]u8 = undefined;
         rng.fill(&salt);
@@ -80,13 +80,13 @@ pub const Header = struct {
 
         if (!mem.startsWith(u8, data, &Self.signature))
             return error.InvalidMagicNumber;
-        const version = meta.intToEnum(Version, data[7]) catch return error.UnknownVersion;
+        const version = enums.fromInt(Version, data[7]) orelse return error.UnknownVersion;
         if (version != Version.v1)
             return error.UnsupportedVersion;
-        const argon2_type = meta.intToEnum(
+        const argon2_type = enums.fromInt(
             Mode,
             mem.readInt(u32, data[8..12], Endian.little),
-        ) catch return error.InvalidArgon2Type;
+        ) orelse return error.InvalidArgon2Type;
         const argon2_version = mem.readInt(u32, data[12..16], Endian.little);
         switch (argon2_version) {
             0x10, 0x13 => {},

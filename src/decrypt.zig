@@ -12,6 +12,7 @@ const XChaCha20Poly1305 = std.crypto.aead.chacha_poly.XChaCha20Poly1305;
 const AuthenticationError = std.crypto.errors.AuthenticationError;
 const argon2 = std.crypto.pwhash.argon2;
 const debug = std.debug;
+const Io = std.Io;
 const Allocator = std.mem.Allocator;
 const testing = std.testing;
 
@@ -33,6 +34,7 @@ pub const Decryptor = struct {
         allocator: Allocator,
         ciphertext: []const u8,
         passphrase: []const u8,
+        io: Io,
     ) DecryptError!Self {
         var header = try Header.parse(ciphertext);
         debug.assert(header.argon2_version == 0x13);
@@ -48,6 +50,7 @@ pub const Decryptor = struct {
             &header.salt,
             header.params,
             header.argon2_type,
+            io,
         );
         const dk = DerivedKey.init(keys);
 
@@ -62,7 +65,7 @@ pub const Decryptor = struct {
         const ciphertext = @embedFile("tests/data/v1/argon2id/v0x13/data.txt.abcrypt");
         const passphrase = "passphrase";
 
-        _ = try Decryptor.init(testing.allocator, ciphertext, passphrase);
+        _ = try Decryptor.init(testing.allocator, ciphertext, passphrase, testing.io);
     }
 
     /// Decrypts the ciphertext into `buf`.
@@ -85,7 +88,7 @@ pub const Decryptor = struct {
         const ciphertext = @embedFile("tests/data/v1/argon2id/v0x13/data.txt.abcrypt");
         const passphrase = "passphrase";
 
-        const cipher = try Decryptor.init(testing.allocator, ciphertext, passphrase);
+        const cipher = try Decryptor.init(testing.allocator, ciphertext, passphrase, testing.io);
         var buf: [14]u8 = undefined;
         try cipher.decrypt(&buf);
         try testing.expectEqualStrings(data, &buf);
@@ -100,7 +103,7 @@ pub const Decryptor = struct {
         const ciphertext = @embedFile("tests/data/v1/argon2id/v0x13/data.txt.abcrypt");
         const passphrase = "passphrase";
 
-        const cipher = try Decryptor.init(testing.allocator, ciphertext, passphrase);
+        const cipher = try Decryptor.init(testing.allocator, ciphertext, passphrase, testing.io);
         try testing.expectEqual(14, cipher.outLen());
     }
 };

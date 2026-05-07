@@ -8,7 +8,7 @@ const std = @import("std");
 
 const AuthenticationError = std.crypto.errors.AuthenticationError;
 const KdfError = std.crypto.pwhash.KdfError;
-const GetRandomError = std.posix.GetRandomError;
+const RandomSecureError = std.Io.RandomSecureError;
 
 /// An error occurs during decryption operations.
 pub const DecryptError = error{
@@ -35,4 +35,4 @@ pub const DecryptError = error{
 } || AuthenticationError || KdfError;
 
 /// An error occurs during encryption operations.
-pub const EncryptError = KdfError || GetRandomError;
+pub const EncryptError = KdfError || RandomSecureError;
