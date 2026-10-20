@@ -128,9 +128,9 @@ pub const Header = struct {
     pub fn asBytes(self: Self) [Self.length]u8 {
         var header: [Self.length]u8 = undefined;
         header[0..7].* = self.magic_number;
-        header[7] = @intFromEnum(self.version);
+        header[7] = @backingInt(self.version);
         var argon2_type: [4]u8 = undefined;
-        mem.writeInt(u32, &argon2_type, @intFromEnum(self.argon2_type), Endian.little);
+        mem.writeInt(u32, &argon2_type, @backingInt(self.argon2_type), Endian.little);
         header[8..12].* = argon2_type;
         var argon2_version: [4]u8 = undefined;
         mem.writeInt(u32, &argon2_version, self.argon2_version, Endian.little);
@@ -177,8 +177,8 @@ test "tag length" {
 }
 
 test "Version to integer" {
-    try testing.expectEqual(0, @intFromEnum(Version.v0));
-    try testing.expectEqual(1, @intFromEnum(Version.v1));
+    try testing.expectEqual(0, @backingInt(Version.v0));
+    try testing.expectEqual(1, @backingInt(Version.v1));
 }
 
 test "magic number" {
